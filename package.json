@@ -1,7 +1,16 @@
 {
-  "private": true,
-  "dependencies": {
+  "name": "@brnbw/contracts",
+  "version": "0.0.0",
+  "author": "Mikkel Malmberg <mikkel@brnbw.com>",
+  "files": [
+    "contracts/*.sol"
+  ],
+  "scripts": {
+    "test": "yarn hardhat test",
+    "release": "np"
   },
+  "license": "MIT",
+  "dependencies": {},
   "devDependencies": {
     "@nomiclabs/hardhat-ethers": "^2.0.5",
     "@nomiclabs/hardhat-etherscan": "^3.0.3",
@@ -12,6 +21,7 @@
     "ethereum-waffle": "^3.4.4",
     "ethers": "^5.6.4",
     "hardhat": "^2.9.3",
+    "np": "^7.6.1",
     "prettier": "^2.6.2",
     "prettier-plugin-solidity": "^1.0.0-beta.19"
   },
