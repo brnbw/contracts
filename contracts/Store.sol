@@ -22,7 +22,7 @@ import "@openzeppelin/contracts/token/ERC1155/ERC1155.sol";
 import "@openzeppelin/contracts/access/AccessControl.sol";
 import { IERC2981, IERC165 } from "@openzeppelin/contracts/interfaces/IERC2981.sol";
 
-contract PeppermintStore is ERC1155, AccessControl {
+contract Store is ERC1155, AccessControl {
   string public name;
   string public symbol;
 

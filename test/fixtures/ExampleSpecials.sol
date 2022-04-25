@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.10;
 
-import "../../contracts/PeppermintStore.sol";
+import "../../contracts/Store.sol";
 
-contract ExampleSpecials is PeppermintStore {
-  constructor(address _royalties) PeppermintStore("Example Specials", "EXAMPLE", _royalties, 500) {
+contract ExampleSpecials is Store {
+  constructor(address _royalties) Store("Example Specials", "EXAMPLE", _royalties, 500) {
   }
 }

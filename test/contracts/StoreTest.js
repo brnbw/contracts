@@ -1,6 +1,6 @@
 const { expect } = require("chai");
 
-describe("PeppermintStore", function () {
+describe("Store", function () {
   let owner, wallet1;
   let contract;
 
