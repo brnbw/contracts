@@ -4,7 +4,7 @@
 
 const dotenv = require("dotenv");
 dotenv.config();
-dotenv.config({ path: `.env.${process.env.NODE_ENV}`, ovveride: true });
+dotenv.config({ path: `.env.${process.env.NODE_ENV}`, overide: true });
 
 require("@nomiclabs/hardhat-waffle");
 require("@nomiclabs/hardhat-ethers");
