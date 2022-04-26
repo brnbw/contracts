@@ -2,7 +2,10 @@
  * @type import('hardhat/config').HardhatUserConfig
  */
 
-require("dotenv").config();
+const dotenv = require("dotenv");
+dotenv.config();
+dotenv.config({ path: `.env.${process.env.NODE_ENV}`, ovveride: true });
+
 require("@nomiclabs/hardhat-waffle");
 require("@nomiclabs/hardhat-ethers");
 require("@nomiclabs/hardhat-etherscan");
