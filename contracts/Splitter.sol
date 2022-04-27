@@ -23,6 +23,11 @@ pragma solidity ^0.8.10;
 import "@openzeppelin/contracts/finance/PaymentSplitter.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 
+/**
+ * @dev An opinionated implementation of a general purpose PaymentSplitter.
+ * Rather than letting each payee pull their funds on their own, a few convenience functions
+ * let the owner flush all funds, Ether and Wrapped Ether, in one transaction.
+ */
 contract Splitter is PaymentSplitter, Ownable {
   address[] private _payees;
 

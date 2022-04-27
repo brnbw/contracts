@@ -24,6 +24,12 @@ import "@openzeppelin/contracts/token/ERC1155/ERC1155.sol";
 import "@openzeppelin/contracts/access/AccessControl.sol";
 import { IERC2981, IERC165 } from "@openzeppelin/contracts/interfaces/IERC2981.sol";
 
+/**
+ * @dev A general purpose ERC1155 collection.
+ * Supports common royalty standards like OpenSea's contractURI and ERC2981.
+ * Mint new works directly on the contract with mint() or grant the MINTER role to a
+ * separate contract with more advanced functionality.
+ */
 contract Collection is ERC1155, AccessControl {
   string public name;
   string public symbol;
@@ -44,6 +50,7 @@ contract Collection is ERC1155, AccessControl {
   ) ERC1155("") {
     name = _name;
     symbol = _symbol;
+
     royaltiesReceiver = _royaltiesReceiver;
     royaltiesPercentage = _royaltiesPercentage;
 
@@ -51,7 +58,7 @@ contract Collection is ERC1155, AccessControl {
     _grantRole(MINTER, _msgSender());
   }
 
-  // AccessControl
+  // Access Control
 
   function grantRoleString(string memory role, address account) public onlyRole(DEFAULT_ADMIN_ROLE) {
     grantRole(keccak256(bytes(role)), account);
