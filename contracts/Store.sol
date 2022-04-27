@@ -2,6 +2,7 @@
 pragma solidity ^0.8.10;
 
 /*
+
         ████████████
       ██            ██
     ██              ██▓▓
@@ -16,6 +17,7 @@ pragma solidity ^0.8.10;
       ██              ██          ||'''|.   ||' '' '' .||   ||   ||  ||   ||'  || .|  '|.  ||  ||  |
         ██          ██            ||    ||  ||     .|' ||   ||   ||  ||   ||    | ||   ||   ||| |||
           ██████████             .||...|'  .||.    '|..'|' .||. .||. ||.  '|...'   '|..|'    |   |
+
 */
 
 import "@openzeppelin/contracts/token/ERC1155/ERC1155.sol";
@@ -34,7 +36,12 @@ contract Store is ERC1155, AccessControl {
   mapping(uint256 => string) private _uris;
   string private _contractURI;
 
-  constructor(string memory _name, string memory _symbol, address _royaltiesReceiver, uint256 _royaltiesPercentage) ERC1155("") {
+  constructor(
+    string memory _name,
+    string memory _symbol,
+    address _royaltiesReceiver,
+    uint256 _royaltiesPercentage
+  ) ERC1155("") {
     name = _name;
     symbol = _symbol;
     royaltiesReceiver = _royaltiesReceiver;
@@ -44,12 +51,29 @@ contract Store is ERC1155, AccessControl {
     _grantRole(MINTER, _msgSender());
   }
 
+  // AccessControl
+
+  function grantRoleString(string memory role, address account) public onlyRole(DEFAULT_ADMIN_ROLE) {
+    grantRole(keccak256(bytes(role)), account);
+  }
+
+  function revokeRoleString(string memory role, address account) public onlyRole(DEFAULT_ADMIN_ROLE) {
+    revokeRole(keccak256(bytes(role)), account);
+  }
+
   // Minting
 
-  function mint(uint256 _id, uint256 _amount, string memory _uri, address _destination) public onlyRole(MINTER) {
+  function mint(
+    uint256 _id,
+    uint256 _amount,
+    string memory _uri,
+    address _destination
+  ) public onlyRole(MINTER) {
     setUri(_id, _uri);
     _mint(_destination, _id, _amount, "");
   }
+
+  // Metadata
 
   function setUri(uint256 _id, string memory _uri) public onlyRole(MINTER) {
     _uris[_id] = _uri;
@@ -58,8 +82,6 @@ contract Store is ERC1155, AccessControl {
   function uri(uint256 _id) public view virtual override returns (string memory) {
     return _uris[_id];
   }
-
-  // Metadata
 
   function contractURI() public view returns (string memory) {
     return _contractURI;
@@ -71,6 +93,11 @@ contract Store is ERC1155, AccessControl {
 
   // IERC2981
 
+  function setRoyaltyInfo(address _royaltiesReceiver, uint256 _royaltiesPercentage) public onlyRole(DEFAULT_ADMIN_ROLE) {
+    royaltiesReceiver = _royaltiesReceiver;
+    royaltiesPercentage = _royaltiesPercentage;
+  }
+
   function royaltyInfo(uint256 _tokenId, uint256 _salePrice) external view returns (address, uint256 royaltyAmount) {
     _tokenId; // silence solc warning
     royaltyAmount = (_salePrice / 10000) * royaltiesPercentage;
@@ -80,9 +107,6 @@ contract Store is ERC1155, AccessControl {
   // ERC165
 
   function supportsInterface(bytes4 interfaceId) public view override(ERC1155, AccessControl) returns (bool) {
-    return interfaceId == type(IERC2981).interfaceId
-      || interfaceId == type(AccessControl).interfaceId
-      || super.supportsInterface(interfaceId);
+    return interfaceId == type(IERC2981).interfaceId || interfaceId == type(AccessControl).interfaceId || super.supportsInterface(interfaceId);
   }
 }
-

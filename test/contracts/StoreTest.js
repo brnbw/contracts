@@ -1,4 +1,6 @@
 const { expect } = require("chai");
+const { keccak256 } = require("@ethersproject/keccak256")
+
 
 describe("Store", function () {
   let owner, wallet1;
@@ -17,6 +19,25 @@ describe("Store", function () {
     expect(await contract.name()).to.equal("Example Specials");
     expect(await contract.symbol()).to.equal("EXAMPLE");
   });
+
+  describe('AccessControl', () => {
+    it('can grant a role', async () => {
+      await contract.grantRoleString('MINTER', wallet1.address);
+
+      await expect(
+        contract.connect(wallet1).mint(1, 1, "ipfs://blah", wallet1.address)
+      ).to.not.be.revertedWith("");
+    })
+
+    it('can revoke a role', async () => {
+      await contract.grantRoleString('MINTER', wallet1.address);
+      await contract.revokeRoleString('MINTER', wallet1.address);
+
+      await expect(
+        contract.connect(wallet1).mint(1, 1, "ipfs://blah", wallet1.address)
+      ).to.be.revertedWith("");
+    })
+  })
 
   describe("mint", () => {
     it("can mint works to an address", async () => {
@@ -54,6 +75,13 @@ describe("Store", function () {
       const [dest, amount] = await contract.royaltyInfo(1, 10000);
       expect(dest).to.eq(owner.address);
       expect(amount.toNumber()).to.eq(500);
+    });
+
+    it("can update its royalty info", async () => {
+      await contract.setRoyaltyInfo(wallet1.address, 1000);
+      const [dest, amount] = await contract.royaltyInfo(1, 10000);
+      expect(dest).to.eq(wallet1.address);
+      expect(amount.toNumber()).to.eq(1000);
     });
   });
 });
