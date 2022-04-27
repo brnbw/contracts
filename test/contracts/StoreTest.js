@@ -2,7 +2,7 @@ const { expect } = require("chai");
 const { keccak256 } = require("@ethersproject/keccak256")
 
 
-describe("Store", function () {
+describe("Collection", function () {
   let owner, wallet1;
   let contract;
 
