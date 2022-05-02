@@ -1,8 +1,6 @@
 const { expect } = require("chai");
-const { keccak256 } = require("@ethersproject/keccak256")
 
-
-describe("Collection", function () {
+describe("GenericCollection", function () {
   let owner, wallet1;
   let contract;
 
@@ -20,24 +18,24 @@ describe("Collection", function () {
     expect(await contract.symbol()).to.equal("EXAMPLE");
   });
 
-  describe('AccessControl', () => {
-    it('can grant a role', async () => {
-      await contract.grantRoleString('MINTER', wallet1.address);
+  describe("AccessControl", () => {
+    it("can grant the minter role", async () => {
+      await contract.grantMint(wallet1.address);
 
       await expect(
         contract.connect(wallet1).mint(1, 1, "ipfs://blah", wallet1.address)
       ).to.not.be.revertedWith("");
-    })
+    });
 
-    it('can revoke a role', async () => {
-      await contract.grantRoleString('MINTER', wallet1.address);
-      await contract.revokeRoleString('MINTER', wallet1.address);
+    it("can revoke a role", async () => {
+      await contract.grantMint(wallet1.address);
+      await contract.revokeMint(wallet1.address);
 
       await expect(
         contract.connect(wallet1).mint(1, 1, "ipfs://blah", wallet1.address)
       ).to.be.revertedWith("");
-    })
-  })
+    });
+  });
 
   describe("mint", () => {
     it("can mint works to an address", async () => {

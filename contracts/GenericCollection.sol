@@ -30,29 +30,31 @@ import { IERC2981, IERC165 } from "@openzeppelin/contracts/interfaces/IERC2981.s
  * Mint new works directly on the contract with mint() or grant the MINTER role to a
  * separate contract with more advanced functionality.
  */
-contract Collection is ERC1155, AccessControl {
+contract GenericCollection is ERC1155, AccessControl {
   string public name;
   string public symbol;
 
-  address public royaltiesReceiver;
-  uint256 public royaltiesPercentage;
-
-  bytes32 public constant MINTER = keccak256("MINTER");
+  bytes32 private constant MINTER = keccak256("MINTER");
 
   mapping(uint256 => string) private _uris;
   string private _contractURI;
 
-  constructor(
-    string memory _name,
-    string memory _symbol,
-    address _royaltiesReceiver,
-    uint256 _royaltiesPercentage
-  ) ERC1155("") {
-    name = _name;
-    symbol = _symbol;
+  address private _royaltiesReceiver;
+  uint256 private _royaltiesPercentage;
 
-    royaltiesReceiver = _royaltiesReceiver;
-    royaltiesPercentage = _royaltiesPercentage;
+  constructor(
+    string memory name_,
+    string memory symbol_,
+    string memory contractURI_,
+    address royaltiesReceiver,
+    uint256 royaltiesPercentage
+  ) ERC1155("") {
+    name = name_;
+    symbol = symbol_;
+
+    _contractURI = contractURI_;
+    _royaltiesReceiver = royaltiesReceiver;
+    _royaltiesPercentage = royaltiesPercentage;
 
     _grantRole(DEFAULT_ADMIN_ROLE, _msgSender());
     _grantRole(MINTER, _msgSender());
@@ -60,55 +62,55 @@ contract Collection is ERC1155, AccessControl {
 
   // Access Control
 
-  function grantRoleString(string memory role, address account) public onlyRole(DEFAULT_ADMIN_ROLE) {
-    grantRole(keccak256(bytes(role)), account);
+  function grantMint(address account) public onlyRole(DEFAULT_ADMIN_ROLE) {
+    grantRole(MINTER, account);
   }
 
-  function revokeRoleString(string memory role, address account) public onlyRole(DEFAULT_ADMIN_ROLE) {
-    revokeRole(keccak256(bytes(role)), account);
+  function revokeMint(address account) public onlyRole(DEFAULT_ADMIN_ROLE) {
+    revokeRole(MINTER, account);
   }
 
   // Minting
 
   function mint(
-    uint256 _id,
-    uint256 _amount,
-    string memory _uri,
-    address _destination
+    uint256 id,
+    uint256 amount,
+    string memory tokenUri,
+    address destination
   ) public onlyRole(MINTER) {
-    setUri(_id, _uri);
-    _mint(_destination, _id, _amount, "");
+    setUri(id, tokenUri);
+    _mint(destination, id, amount, "");
   }
 
   // Metadata
 
-  function setUri(uint256 _id, string memory _uri) public onlyRole(MINTER) {
-    _uris[_id] = _uri;
+  function setUri(uint256 id, string memory tokenUri) public onlyRole(MINTER) {
+    _uris[id] = tokenUri;
   }
 
-  function uri(uint256 _id) public view virtual override returns (string memory) {
-    return _uris[_id];
+  function uri(uint256 id) public view virtual override returns (string memory) {
+    return _uris[id];
   }
 
   function contractURI() public view returns (string memory) {
     return _contractURI;
   }
 
-  function setContractURI(string memory _uri) public onlyRole(DEFAULT_ADMIN_ROLE) {
-    _contractURI = _uri;
+  function setContractURI(string memory contractURI_) public onlyRole(DEFAULT_ADMIN_ROLE) {
+    _contractURI = contractURI_;
   }
 
   // IERC2981
 
-  function setRoyaltyInfo(address _royaltiesReceiver, uint256 _royaltiesPercentage) public onlyRole(DEFAULT_ADMIN_ROLE) {
-    royaltiesReceiver = _royaltiesReceiver;
-    royaltiesPercentage = _royaltiesPercentage;
+  function setRoyaltyInfo(address royaltiesReceiver, uint256 royaltiesPercentage) public onlyRole(DEFAULT_ADMIN_ROLE) {
+    _royaltiesReceiver = royaltiesReceiver;
+    _royaltiesPercentage = royaltiesPercentage;
   }
 
-  function royaltyInfo(uint256 _tokenId, uint256 _salePrice) external view returns (address, uint256 royaltyAmount) {
-    _tokenId; // silence solc warning
-    royaltyAmount = (_salePrice / 10000) * royaltiesPercentage;
-    return (royaltiesReceiver, royaltyAmount);
+  function royaltyInfo(uint256 tokenId, uint256 salePrice) external view returns (address, uint256 royaltyAmount) {
+    tokenId; // silence solc warning
+    royaltyAmount = (salePrice / 10000) * _royaltiesPercentage;
+    return (_royaltiesReceiver, royaltyAmount);
   }
 
   // ERC165
