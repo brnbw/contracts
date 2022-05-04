@@ -15,4 +15,4 @@
           ██████████             .||...|'  .||.    '|..'|' .||. .||. ||.  '|...'   '|..|'    |   |
 ```
 
-General purpose contracts for NFT-scewed Ethereum development.
+General purpose contracts for NFT-skewed Ethereum development.
