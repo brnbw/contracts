@@ -55,6 +55,20 @@ describe("GenericCollection", function () {
     });
   });
 
+  describe("mintExisting", () => {
+    it("can mint existing works to an address", async () => {
+      await contract.mint(1, 1, "ipfs://blah", wallet1.address);
+      await contract.mintExisting(1, 1, wallet1.address);
+      expect(await contract.balanceOf(wallet1.address, 1)).to.eq(2);
+    });
+
+    it("fails mint for non-minter role", async () => {
+      await expect(
+        contract.connect(wallet1).mintExisting(1, 1, wallet1.address)
+      ).to.be.revertedWith("");
+    });
+  });
+
   describe("setUri", () => {
     it("can set as admin", async () => {
       await contract.setUri(1, "hello");

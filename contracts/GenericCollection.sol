@@ -82,6 +82,14 @@ contract GenericCollection is ERC1155, AccessControl {
     _mint(destination, id, amount, "");
   }
 
+  function mintExisting(
+    uint256 id,
+    uint256 amount,
+    address destination
+  ) public onlyRole(MINTER) {
+    _mint(destination, id, amount, "");
+  }
+
   // Metadata
 
   function setUri(uint256 id, string memory tokenUri) public onlyRole(MINTER) {
