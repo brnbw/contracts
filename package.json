@@ -1,6 +1,6 @@
 {
   "name": "@mikker/contracts",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "author": "Mikkel Malmberg <mikkel@brnbw.com>",
   "files": [
     "contracts/*.sol"
