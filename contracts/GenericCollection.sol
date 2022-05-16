@@ -10,8 +10,8 @@ pragma solidity ^0.8.9;
     ██      ██████▓▓▒▒▓▓▓▓▓▓▓▓
     ████████▓▓▓▓▓▓▒▒▒▒▒▒▒▒▒▒▒▒
     ██    ████████▓▓▒▒▒▒▒▒▒▒▒▒
-    ██            ██▓▓▒▒▒▒▒▒▒▒
-    ██              ██▓▓▓▓▓▓▓▓
+    ██            ██▓▓▒▒▒▒▒▒▒▒▒
+    ██              ██▓▓▓▓▓▓▓▓▓
     ██    ██      ██    ██       '||''|.                    ||           '||
     ██                  ██        ||   ||  ... ..   ....   ...  .. ...    || ...    ...   ... ... ...
       ██              ██          ||'''|.   ||' '' '' .||   ||   ||  ||   ||'  || .|  '|.  ||  ||  |
@@ -23,6 +23,7 @@ pragma solidity ^0.8.9;
 import "@openzeppelin/contracts/token/ERC1155/ERC1155.sol";
 import "@openzeppelin/contracts/access/AccessControl.sol";
 import { IERC2981, IERC165 } from "@openzeppelin/contracts/interfaces/IERC2981.sol";
+import "./IGenericCollection.sol";
 
 /**
  * @dev A general purpose ERC1155 collection.
@@ -30,7 +31,7 @@ import { IERC2981, IERC165 } from "@openzeppelin/contracts/interfaces/IERC2981.s
  * Mint new works directly on the contract with mint() or grant the MINTER role to a
  * separate contract with more advanced functionality.
  */
-contract GenericCollection is ERC1155, AccessControl {
+contract GenericCollection is IGenericCollection, ERC1155, AccessControl {
   string public name;
   string public symbol;
 
@@ -123,7 +124,7 @@ contract GenericCollection is ERC1155, AccessControl {
 
   // ERC165
 
-  function supportsInterface(bytes4 interfaceId) public view override(ERC1155, AccessControl) returns (bool) {
+  function supportsInterface(bytes4 interfaceId) public view override(IERC165, ERC1155, AccessControl) returns (bool) {
     return interfaceId == type(IERC2981).interfaceId || interfaceId == type(AccessControl).interfaceId || super.supportsInterface(interfaceId);
   }
 }
