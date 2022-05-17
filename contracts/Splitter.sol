@@ -21,14 +21,16 @@ pragma solidity ^0.8.9;
 */
 
 import "@openzeppelin/contracts/finance/PaymentSplitter.sol";
-import "@openzeppelin/contracts/access/Ownable.sol";
+import "@openzeppelin/contracts/access/AccessControl.sol";
 
 /**
  * @dev An opinionated implementation of a general purpose PaymentSplitter.
  * Rather than letting each payee pull their funds on their own, a few convenience functions
  * let the owner flush all funds, Ether and Wrapped Ether, in one transaction.
  */
-contract Splitter is PaymentSplitter, Ownable {
+contract Splitter is PaymentSplitter, AccessControl {
+  bytes32 public constant FLUSHWORTHY = keccak256("FLUSHWORTHY");
+
   address[] private _payees;
 
   IERC20 weth;
@@ -39,10 +41,18 @@ contract Splitter is PaymentSplitter, Ownable {
     address _wethAddr
   ) PaymentSplitter(payees, _shares) {
     _payees = payees;
+
+    _grantRole(DEFAULT_ADMIN_ROLE, _msgSender());
+    _grantRole(FLUSHWORTHY, _msgSender());
+
+    for (uint256 i = 0; i < payees.length; i++) {
+      _grantRole(FLUSHWORTHY, payees[i]);
+    }
+
     weth = IERC20(_wethAddr);
   }
 
-  function flush() public onlyOwner {
+  function flush() public onlyRole(FLUSHWORTHY) {
     uint256 length = _payees.length;
 
     for (uint256 i = 0; i < length; i++) {
@@ -51,7 +61,7 @@ contract Splitter is PaymentSplitter, Ownable {
     }
   }
 
-  function flushToken(IERC20 token) public onlyOwner {
+  function flushToken(IERC20 token) public onlyRole(FLUSHWORTHY) {
     uint256 length = _payees.length;
 
     for (uint256 i = 0; i < length; i++) {
@@ -60,7 +70,7 @@ contract Splitter is PaymentSplitter, Ownable {
     }
   }
 
-  function flushCommon() public onlyOwner {
+  function flushCommon() public onlyRole(FLUSHWORTHY) {
     uint256 length = _payees.length;
     bool hasWeth = weth.balanceOf(address(this)) > 0;
 

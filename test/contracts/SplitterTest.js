@@ -3,13 +3,13 @@ const { parseEther } = ethers.utils;
 
 describe("Splitter", function () {
   let owner;
-  let wallet1, wallet2, wallet3;
+  let wallet1, wallet2, wallet3, wallet4isNotIn;
   let fakeWeth;
 
   let contract;
 
   before(async () => {
-    [owner, wallet1, wallet2, wallet3] = await ethers.getSigners();
+    [owner, wallet1, wallet2, wallet3, wallet4isNotIn] = await ethers.getSigners();
 
     const FakeWeth = await ethers.getContractFactory("FakeWeth");
     fakeWeth = await FakeWeth.deploy();
@@ -30,12 +30,16 @@ describe("Splitter", function () {
       value: parseEther("10"),
     });
 
-    const tx = await contract.flush();
+    const tx = await contract.connect(wallet1).flush();
 
     await expect(tx).to.changeEtherBalances(
       [contract, wallet1, wallet2, wallet3],
       [-10, 7, 2, 1].map((n) => parseEther(n.toString()))
     );
+  });
+
+  it("requires FLUSHWORTHY role", async function () {
+    await expect(contract.connect(wallet4isNotIn).flush()).to.be.revertedWith("AccessControl:")
   });
 
   it("can flush weth", async () => {
@@ -45,7 +49,7 @@ describe("Splitter", function () {
     expect((await fakeWeth.balanceOf(contract.address)).toNumber()).to.eq(10);
 
     await expect(() =>
-      contract.flushToken(fakeWeth.address)
+      contract.connect(wallet1).flushToken(fakeWeth.address)
     ).to.changeTokenBalances(
       fakeWeth,
       [contract, wallet1, wallet2, wallet3],
@@ -60,7 +64,7 @@ describe("Splitter", function () {
     });
     await fakeWeth.transfer(contract.address, 10);
 
-    await expect(() => contract.flushCommon())
+    await expect(() => contract.connect(wallet1).flushCommon())
       .to.changeTokenBalances(
         fakeWeth,
         [contract, wallet1, wallet2, wallet3],
