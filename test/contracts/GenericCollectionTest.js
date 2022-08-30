@@ -18,66 +18,46 @@ describe("GenericCollection", function () {
     expect(await contract.symbol()).to.equal("EXAMPLE");
   });
 
-  describe("AccessControl", () => {
-    it("can grant the minter role", async () => {
-      await contract.grantMint(wallet1.address);
-
-      await expect(
-        contract.connect(wallet1).mint(1, 1, "ipfs://blah", wallet1.address)
-      ).to.not.be.revertedWith("");
+  describe("mint", () => {
+    it("can mint to an address", async () => {
+      await contract.mint(1, 1, wallet1.address);
+      expect(await contract.balanceOf(wallet1.address, 1)).to.eq(1);
     });
 
-    it("can revoke a role", async () => {
-      await contract.grantMint(wallet1.address);
-      await contract.revokeMint(wallet1.address);
-
+    it("fails mint for non-minter role", async () => {
       await expect(
-        contract.connect(wallet1).mint(1, 1, "ipfs://blah", wallet1.address)
+        contract.connect(wallet1).mint(1, 1, wallet1.address)
       ).to.be.revertedWith("");
     });
   });
 
-  describe("mint", () => {
+  describe("mintCustom", () => {
     it("can mint works to an address", async () => {
-      await contract.mint(1, 1, "ipfs://blah", wallet1.address);
+      await contract.mintCustom(1, 1, wallet1.address, "ipfs://blah");
       expect(await contract.balanceOf(wallet1.address, 1)).to.eq(1);
     });
 
     it("saves uris", async () => {
-      await contract.mint(1, 1, "ipfs://blah", wallet1.address);
+      await contract.mintCustom(1, 1, wallet1.address, "ipfs://blah");
       expect(await contract.uri(1)).to.eq("ipfs://blah");
     });
 
     it("fails mint for non-minter role", async () => {
       await expect(
-        contract.connect(wallet1).mint(1, 1, "ipfs://blah", wallet1.address)
+        contract.connect(wallet1).mintCustom(1, 1, wallet1.address, "ipfs://blah")
       ).to.be.revertedWith("");
     });
   });
 
-  describe("mintExisting", () => {
-    it("can mint existing works to an address", async () => {
-      await contract.mint(1, 1, "ipfs://blah", wallet1.address);
-      await contract.mintExisting(1, 1, wallet1.address);
-      expect(await contract.balanceOf(wallet1.address, 1)).to.eq(2);
-    });
-
-    it("fails mint for non-minter role", async () => {
-      await expect(
-        contract.connect(wallet1).mintExisting(1, 1, wallet1.address)
-      ).to.be.revertedWith("");
-    });
-  });
-
-  describe("setUri", () => {
+  describe("setCustomUri", () => {
     it("can set as admin", async () => {
-      await contract.setUri(1, "hello");
+      await contract.setCustomUri(1, "hello");
       expect(await contract.uri(1)).to.eq("hello");
     });
 
     it("cannot set as anyone else", async () => {
       await expect(
-        contract.connect(wallet1).setUri(1, "hello")
+        contract.connect(wallet1).setCustomUri(1, "hello")
       ).to.be.revertedWith("AccessControl:");
     });
   });

@@ -22,52 +22,41 @@ pragma solidity ^0.8.9;
 
 import "@openzeppelin/contracts/token/ERC1155/ERC1155.sol";
 import "@openzeppelin/contracts/access/AccessControl.sol";
-import { IERC2981, IERC165 } from "@openzeppelin/contracts/interfaces/IERC2981.sol";
+import "@openzeppelin/contracts/token/common/ERC2981.sol";
 
 /**
  * @dev A general purpose ERC1155 collection.
  * Supports common royalty standards like OpenSea's contractURI and ERC2981.
- * Mint new works directly on the contract with mint() or grant the MINTER role to a
+ * Mint new works directly on the contract with mint() or grant the MINTWORTHY role to a
  * separate contract with more advanced functionality.
  */
-contract GenericCollection is ERC1155, AccessControl {
+contract GenericCollection is ERC1155, AccessControl, ERC2981 {
   string public name;
   string public symbol;
+  string private _uri;
 
-  bytes32 private constant MINTER = keccak256("MINTER");
+  bytes32 public constant MINTWORTHY = keccak256("MINTWORTHY");
 
-  mapping(uint256 => string) private _uris;
+  mapping(uint256 => string) private _customURIs;
   string private _contractURI;
-
-  address private _royaltiesReceiver;
-  uint256 private _royaltiesPercentage;
 
   constructor(
     string memory name_,
     string memory symbol_,
-    string memory contractURI_,
-    address royaltiesReceiver,
-    uint256 royaltiesPercentage
+    string memory initialBaseURI,
+    string memory initialContractURI,
+    address payable royaltiesReceiver,
+    uint96 royaltiesNumerator
   ) ERC1155("") {
     name = name_;
     symbol = symbol_;
 
-    _contractURI = contractURI_;
-    _royaltiesReceiver = royaltiesReceiver;
-    _royaltiesPercentage = royaltiesPercentage;
-
     _grantRole(DEFAULT_ADMIN_ROLE, _msgSender());
-    _grantRole(MINTER, _msgSender());
-  }
+    _grantRole(MINTWORTHY, _msgSender());
 
-  // Access Control
-
-  function grantMint(address account) public onlyRole(DEFAULT_ADMIN_ROLE) {
-    grantRole(MINTER, account);
-  }
-
-  function revokeMint(address account) public onlyRole(DEFAULT_ADMIN_ROLE) {
-    revokeRole(MINTER, account);
+    setBaseURI(initialBaseURI);
+    setContractURI(initialContractURI);
+    setRoyaltyInfo(royaltiesReceiver, royaltiesNumerator);
   }
 
   // Minting
@@ -75,29 +64,39 @@ contract GenericCollection is ERC1155, AccessControl {
   function mint(
     uint256 id,
     uint256 amount,
-    string memory tokenUri,
     address destination
-  ) public onlyRole(MINTER) {
-    setUri(id, tokenUri);
+  ) public onlyRole(MINTWORTHY) {
     _mint(destination, id, amount, "");
   }
 
-  function mintExisting(
+  function mintCustom(
     uint256 id,
     uint256 amount,
-    address destination
-  ) public onlyRole(MINTER) {
+    address destination,
+    string memory tokenUri
+  ) public onlyRole(MINTWORTHY) {
+    setCustomUri(id, tokenUri);
     _mint(destination, id, amount, "");
   }
 
   // Metadata
 
-  function setUri(uint256 id, string memory tokenUri) public onlyRole(MINTER) {
-    _uris[id] = tokenUri;
+  function setBaseURI(string memory baseURI) public onlyRole(DEFAULT_ADMIN_ROLE) {
+    _uri = baseURI;
+  }
+
+  function setCustomUri(uint256 id, string memory tokenUri) public onlyRole(MINTWORTHY) {
+    _customURIs[id] = tokenUri;
   }
 
   function uri(uint256 id) public view virtual override returns (string memory) {
-    return _uris[id];
+    string memory customURI = _customURIs[id];
+
+    if (keccak256(bytes(customURI)) != keccak256(bytes(""))) {
+      return customURI;
+    }
+
+    return _uri;
   }
 
   function contractURI() public view returns (string memory) {
@@ -110,20 +109,13 @@ contract GenericCollection is ERC1155, AccessControl {
 
   // IERC2981
 
-  function setRoyaltyInfo(address royaltiesReceiver, uint256 royaltiesPercentage) public onlyRole(DEFAULT_ADMIN_ROLE) {
-    _royaltiesReceiver = royaltiesReceiver;
-    _royaltiesPercentage = royaltiesPercentage;
-  }
-
-  function royaltyInfo(uint256 tokenId, uint256 salePrice) external view returns (address, uint256 royaltyAmount) {
-    tokenId; // silence solc warning
-    royaltyAmount = (salePrice / 10000) * _royaltiesPercentage;
-    return (_royaltiesReceiver, royaltyAmount);
+  function setRoyaltyInfo(address payable receiver, uint96 numerator) public onlyRole(DEFAULT_ADMIN_ROLE) {
+    _setDefaultRoyalty(receiver, numerator);
   }
 
   // ERC165
 
-  function supportsInterface(bytes4 interfaceId) public view override(ERC1155, AccessControl) returns (bool) {
-    return interfaceId == type(IERC2981).interfaceId || interfaceId == type(AccessControl).interfaceId || super.supportsInterface(interfaceId);
+  function supportsInterface(bytes4 interfaceId) public view virtual override(ERC1155, ERC2981, AccessControl) returns (bool) {
+    return ERC1155.supportsInterface(interfaceId) || ERC2981.supportsInterface(interfaceId) || AccessControl.supportsInterface(interfaceId) || super.supportsInterface(interfaceId);
   }
 }
