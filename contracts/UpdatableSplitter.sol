@@ -26,11 +26,6 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/access/AccessControl.sol";
 
-/**
- * @dev An opinionated implementation of a general purpose PaymentSplitter.
- * Rather than letting each payee pull their funds on their own, a few convenience functions
- * let the owner flush all funds, Ether and Wrapped Ether, in one transaction.
- */
 contract UpdatableSplitter is Context, AccessControl {
   bytes32 public constant FLUSHWORTHY = keccak256("FLUSHWORTHY");
 
@@ -38,12 +33,12 @@ contract UpdatableSplitter is Context, AccessControl {
   address[] private _payees;
   mapping(address => uint256) private _shares;
 
-  IERC20 weth;
+  IERC20[] private _tokens;
 
   constructor(
     address[] memory payees,
     uint256[] memory shares_,
-    address wethAddr
+    address[] memory tokenAddresses
   ) payable {
     _grantRole(DEFAULT_ADMIN_ROLE, _msgSender());
     _grantRole(FLUSHWORTHY, _msgSender());
@@ -52,7 +47,9 @@ contract UpdatableSplitter is Context, AccessControl {
       _grantRole(FLUSHWORTHY, payees[i]);
     }
 
-    weth = IERC20(wethAddr);
+    for (uint256 i = 0; i < tokenAddresses.length; i++) {
+      addToken(tokenAddresses[i]);
+    }
 
     updateSplit(payees, shares_);
   }
@@ -89,6 +86,10 @@ contract UpdatableSplitter is Context, AccessControl {
     return _shares[payee_];
   }
 
+  function addToken(address tokenAddress) public onlyRole(DEFAULT_ADMIN_ROLE) {
+    _tokens.push(IERC20(tokenAddress));
+  }
+
   function flush() public onlyRole(FLUSHWORTHY) {
     uint256 unit = _unit();
     if (unit == 0) return;
@@ -113,7 +114,10 @@ contract UpdatableSplitter is Context, AccessControl {
 
   function flushCommon() public onlyRole(FLUSHWORTHY) {
     flush();
-    flushToken(weth);
+
+    for (uint256 i = 0; i < _tokens.length; i++) {
+      flushToken(_tokens[i]);
+    }
   }
 
   function _addPayee(address account, uint256 shares_) private {

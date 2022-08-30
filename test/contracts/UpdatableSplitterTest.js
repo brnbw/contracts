@@ -21,7 +21,7 @@ describe("UpdatableSplitter", function () {
     contract = await UpdatableSplitter.deploy(
       [wallet1.address, wallet2.address, wallet3.address],
       [7, 2, 1],
-      fakeWeth.address
+      [fakeWeth.address]
     );
   });
 
