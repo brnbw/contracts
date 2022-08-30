@@ -35,7 +35,7 @@ contract GenericCollection is ERC1155, AccessControl, ERC2981 {
   string public symbol;
   string private _uri;
 
-  bytes32 private constant MINTWORTHY = keccak256("MINTWORTHY");
+  bytes32 public constant MINTWORTHY = keccak256("MINTWORTHY");
 
   mapping(uint256 => string) private _customURIs;
   string private _contractURI;
@@ -69,7 +69,7 @@ contract GenericCollection is ERC1155, AccessControl, ERC2981 {
     _mint(destination, id, amount, "");
   }
 
-  function mint(
+  function mintCustom(
     uint256 id,
     uint256 amount,
     address destination,
