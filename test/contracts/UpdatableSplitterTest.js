@@ -79,7 +79,7 @@ describe("UpdatableSplitter", function () {
       );
   });
 
-  it.only("can update its splits", async () => {
+  it("can update its splits", async () => {
     await owner.sendTransaction({
       to: contract.address,
       value: parseEther("10"),
