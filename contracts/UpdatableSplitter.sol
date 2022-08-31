@@ -43,14 +43,14 @@ contract UpdatableSplitter is Context, AccessControl {
   address[] private _payees;
   mapping(address => uint256) private _shares;
 
-  IERC20[] private _commonTokens;
+  address[] private _commonTokens;
 
   /**
    * @dev Takes a list of payees and a corresponding list of shares.
    *
    * All addresses in `payees` must be non-zero. Both arrays must have the same non-zero length, and there must be no duplicates in `payees`.
    *
-   * Additionally takes a list of ERC20 tokens that can be flushed with `flushCommon`.
+   * Additionally takes a list of ERC20 token addresses that can be flushed with `flushCommon`.
    */
   constructor(
     address[] memory payees,
@@ -64,11 +64,9 @@ contract UpdatableSplitter is Context, AccessControl {
       _grantRole(FLUSHWORTHY, payees[i]);
     }
 
-    for (uint256 i = 0; i < tokenAddresses.length; i++) {
-      addToken(tokenAddresses[i]);
-    }
-
     updateSplit(payees, shares_);
+
+    _commonTokens = tokenAddresses;
   }
 
   receive() external payable virtual {
@@ -101,7 +99,7 @@ contract UpdatableSplitter is Context, AccessControl {
    */
   function addToken(address tokenAddress) public onlyRole(DEFAULT_ADMIN_ROLE) {
     require(tokenAddress != address(0), "UpdatableSplitter: address is the zero address");
-    _commonTokens.push(IERC20(tokenAddress));
+    _commonTokens.push(tokenAddress);
   }
 
   /**
@@ -162,7 +160,7 @@ contract UpdatableSplitter is Context, AccessControl {
     flush();
 
     for (uint256 i = 0; i < _commonTokens.length; i++) {
-      flushToken(_commonTokens[i]);
+      flushToken(IERC20(_commonTokens[i]));
     }
   }
 
